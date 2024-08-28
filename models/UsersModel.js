@@ -1,26 +1,26 @@
 const mongoose = require('mongoose');
-const AutoIncrement = require('mongoose-sequence')(mongoose);
+const bcrypt = require('bcryptjs');
 
-const UsersDetailsSchema = new mongoose.Schema({
-    userId: {
-        type: Number,
-        unique: true
-    },
-    collegeId: {
-        type: mongoose.Schema.Types.ObjectId
-    },
-    username: {
-        type: String
-    },
-    password: {
-        type: String
-    },
-    photo: {
-        type: String
-    }
-}, { timestamps: true });
+const UserSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+});
 
-UsersDetailsSchema.plugin(AutoIncrement, { inc_field: 'userId', start_seq: 1000000 });
+// Hash password before saving the user
+UserSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
 
-const Users = mongoose.model('Users', UsersDetailsSchema);
-module.exports = Users;
+module.exports = mongoose.model('User', UserSchema);

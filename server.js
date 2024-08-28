@@ -1,32 +1,23 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const authRoutes = require('./routes/UsersRoute');
+const cors = require('cors');
 require('dotenv').config();
-const {createUser} = require('./controllers/UserController');
 
 const app = express();
-const port = process.env.PORT || 3000;
 
-app.use("/api/create", createUser);
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-});
+// Routes
+app.use('/api', authRoutes);
 
-const connection = mongoose.connection;
-connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
-connection.once('open', () => {
-    console.log('Connected to MongoDB');
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.log(err));
 
-    // Require the User model
-    require('./models/UsersModel');
-    
-    app.listen(port, () => {
-        console.log(`Server is running on port ${port}`);
-    });
-});
-
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
+// Start Server
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
